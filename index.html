@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#FFB7C5" />
+  <title>萌宝成长记 · 婴儿养育一体化</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>👶</text></svg>" />
+</head>
+<body>
+  <!-- 顶部状态栏 -->
+  <header class="app-header">
+    <div class="header-left">
+      <button class="icon-btn" id="babySwitcherBtn" aria-label="切换宝宝">
+        <span class="baby-avatar" id="currentBabyAvatar">👶</span>
+      </button>
+      <div class="header-title">
+        <h1 id="appTitle">萌宝成长记</h1>
+        <span id="babySubtitle" class="subtitle">添加宝宝开始记录</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <button class="icon-btn" id="notificationsBtn" aria-label="提醒">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span class="badge" id="reminderBadge" hidden>0</span>
+      </button>
+      <button class="icon-btn" id="settingsBtn" aria-label="设置">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- 主内容区 -->
+  <main id="app">
+    <!-- 仪表板视图 -->
+    <section class="view active" id="view-dashboard">
+      <div class="dashboard-header">
+        <h2 class="greeting" id="greeting">早上好 ☀️</h2>
+        <p class="dashboard-date" id="todayDate"></p>
+      </div>
+
+      <div class="quick-stats" id="quickStats">
+        <div class="stat-card feeding">
+          <div class="stat-icon">🍼</div>
+          <div class="stat-info">
+            <div class="stat-value" id="statFeeding">0</div>
+            <div class="stat-label">今日喂养</div>
+          </div>
+        </div>
+        <div class="stat-card diaper">
+          <div class="stat-icon">🧷</div>
+          <div class="stat-info">
+            <div class="stat-value" id="statDiaper">0</div>
+            <div class="stat-label">今日尿布</div>
+          </div>
+        </div>
+        <div class="stat-card sleep">
+          <div class="stat-icon">😴</div>
+          <div class="stat-info">
+            <div class="stat-value" id="statSleep">0h</div>
+            <div class="stat-label">今日睡眠</div>
+          </div>
+        </div>
+        <div class="stat-card vaccine">
+          <div class="stat-icon">💉</div>
+          <div class="stat-info">
+            <div class="stat-value" id="statVaccine">0</div>
+            <div class="stat-label">待接种</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3 class="section-title">快捷记录</h3>
+        <div class="quick-actions">
+          <button class="action-btn feeding" data-quick="feeding">
+            <span class="action-icon">🍼</span>
+            <span class="action-label">喂奶</span>
+          </button>
+          <button class="action-btn diaper" data-quick="diaper">
+            <span class="action-icon">🧷</span>
+            <span class="action-label">换尿布</span>
+          </button>
+          <button class="action-btn sleep" data-quick="sleep">
+            <span class="action-icon">😴</span>
+            <span class="action-label">睡眠</span>
+          </button>
+          <button class="action-btn medicine" data-quick="medicine">
+            <span class="action-icon">💊</span>
+            <span class="action-label">用药</span>
+          </button>
+          <button class="action-btn growth" data-quick="growth">
+            <span class="action-icon">📏</span>
+            <span class="action-label">生长</span>
+          </button>
+          <button class="action-btn milestone" data-quick="milestone">
+            <span class="action-icon">⭐</span>
+            <span class="action-label">里程碑</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3 class="section-title">今日提醒</h3>
+        <div class="reminders-list" id="dashboardReminders">
+          <div class="empty-hint">暂无待办提醒</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3 class="section-title">近期记录</h3>
+        <div class="recent-list" id="recentRecords">
+          <div class="empty-hint">今天还没有记录</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 喂养视图 -->
+    <section class="view" id="view-feeding">
+      <div class="view-header">
+        <h2>🍼 喂养记录</h2>
+        <button class="btn-primary" id="addFeedingBtn">添加</button>
+      </div>
+      <div class="view-content" id="feedingList"></div>
+    </section>
+
+    <!-- 疫苗视图 -->
+    <section class="view" id="view-vaccines">
+      <div class="view-header">
+        <h2>💉 疫苗接种</h2>
+        <button class="btn-secondary" id="vaccineInfoBtn">免疫规划说明</button>
+      </div>
+      <div class="view-content">
+        <div class="vaccine-tabs">
+          <button class="tab-btn active" data-vaccine-tab="upcoming">即将接种</button>
+          <button class="tab-btn" data-vaccine-tab="overdue">逾期未种</button>
+          <button class="tab-btn" data-vaccine-tab="done">已接种</button>
+        </div>
+        <div id="vaccineList"></div>
+      </div>
+    </section>
+
+    <!-- 尿布视图 -->
+    <section class="view" id="view-diapers">
+      <div class="view-header">
+        <h2>🧷 尿布记录</h2>
+        <button class="btn-primary" id="addDiaperBtn">添加</button>
+      </div>
+      <div class="view-content" id="diaperList"></div>
+    </section>
+
+    <!-- 睡眠视图 -->
+    <section class="view" id="view-sleep">
+      <div class="view-header">
+        <h2>😴 睡眠记录</h2>
+        <button class="btn-primary" id="addSleepBtn">添加</button>
+      </div>
+      <div class="view-content" id="sleepList"></div>
+    </section>
+
+    <!-- 成长视图 -->
+    <section class="view" id="view-growth">
+      <div class="view-header">
+        <h2>📏 成长曲线</h2>
+        <button class="btn-primary" id="addGrowthBtn">添加测量</button>
+      </div>
+      <div class="view-content" id="growthContent"></div>
+    </section>
+
+    <!-- 里程碑视图 -->
+    <section class="view" id="view-milestones">
+      <div class="view-header">
+        <h2>⭐ 成长里程碑</h2>
+        <button class="btn-primary" id="addMilestoneBtn">添加</button>
+      </div>
+      <div class="view-content" id="milestoneList"></div>
+    </section>
+  </main>
+
+  <!-- 底部导航 -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-view="dashboard">
+      <span class="nav-icon">🏠</span>
+      <span class="nav-label">首页</span>
+    </button>
+    <button class="nav-btn" data-view="feeding">
+      <span class="nav-icon">🍼</span>
+      <span class="nav-label">喂养</span>
+    </button>
+    <button class="nav-btn" data-view="vaccines">
+      <span class="nav-icon">💉</span>
+      <span class="nav-label">疫苗</span>
+    </button>
+    <button class="nav-btn" data-view="diapers">
+      <span class="nav-icon">🧷</span>
+      <span class="nav-label">尿布</span>
+    </button>
+    <button class="nav-btn" data-view="sleep">
+      <span class="nav-icon">😴</span>
+      <span class="nav-label">睡眠</span>
+    </button>
+    <button class="nav-btn" data-view="growth">
+      <span class="nav-icon">📏</span>
+      <span class="nav-label">成长</span>
+    </button>
+  </nav>
+
+  <!-- 模态框容器 -->
+  <div id="modalContainer"></div>
+
+  <!-- Toast 提示 -->
+  <div id="toast" class="toast" hidden></div>
+
+  <script src="vaccines.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
