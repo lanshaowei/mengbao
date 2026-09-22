@@ -1,4 +1,11 @@
 -- ==============================================
+-- 先删除旧函数（改了返回类型必须先 DROP）
+-- ==============================================
+drop function if exists public.create_family(text, uuid, text);
+drop function if exists public.join_family(text, uuid, text);
+drop function if exists public.get_my_family_id();
+
+-- ==============================================
 -- 萌宝成长记 - SECURITY DEFINER 函数
 -- 避免因列名歧义和 RLS 限制导致的失败
 -- ==============================================
