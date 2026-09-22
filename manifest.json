@@ -1,0 +1,26 @@
+{
+  "name": "萌宝成长记",
+  "short_name": "萌宝",
+  "description": "全家一起记录宝宝成长",
+  "start_url": "/mengbao/",
+  "scope": "/mengbao/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FFE5EC",
+  "theme_color": "#FFB7C5",
+  "lang": "zh-CN",
+  "icons": [
+    {
+      "src": "/mengbao/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/mengbao/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
