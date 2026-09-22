@@ -1,6 +1,6 @@
-﻿-- ==============================================
--- 修复方案：用 SECURITY DEFINER 函数绕过 RLS
--- 直接一站式创建家庭 / 加入家庭
+-- ==============================================
+-- 萌宝成长记 - SECURITY DEFINER 函数
+-- 避免因列名歧义和 RLS 限制导致的失败
 -- ==============================================
 
 -- 创建家庭（管理员）
@@ -9,7 +9,7 @@ create or replace function public.create_family(
   p_user_id uuid,
   p_display_name text
 )
-returns table(family_id uuid, invite_code text)
+returns table(family_id uuid, family_invite_code text)
 language plpgsql
 security definer
 set search_path = public
@@ -18,12 +18,10 @@ declare
   v_family_id uuid;
   v_invite text;
 begin
-  -- 创建家庭
   insert into public.families (name, created_by)
   values (p_name, p_user_id)
-  returning id, invite_code into v_family_id, v_invite;
+  returning id, public.families.invite_code into v_family_id, v_invite;
 
-  -- 关联管理员 profile
   update public.profiles
   set family_id = v_family_id, role = 'admin', display_name = p_display_name
   where id = p_user_id;
@@ -46,13 +44,14 @@ as $$
 declare
   v_family_id uuid;
 begin
-  -- 查找家庭
-  select id into v_family_id from public.families where invite_code = p_invite_code;
+  select id into v_family_id
+  from public.families
+  where public.families.invite_code = p_invite_code;
+
   if v_family_id is null then
     raise exception '邀请码不正确';
   end if;
 
-  -- 关联成员 profile
   update public.profiles
   set family_id = v_family_id, role = 'member', display_name = p_display_name
   where id = p_user_id;
@@ -61,13 +60,13 @@ begin
 end;
 $$;
 
--- 获取当前用户家庭 ID（SECURITY DEFINER 绕过 RLS）
+-- 获取当前用户家庭 ID（绕过 RLS）
 create or replace function public.get_my_family_id()
 returns uuid
 language sql
 security definer
 set search_path = public
 stable
-as 
+as $$
   select family_id from public.profiles where id = auth.uid() limit 1;
-;
+$$;

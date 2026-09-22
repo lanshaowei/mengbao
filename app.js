@@ -356,7 +356,7 @@
       });
       if (rpcErr) throw rpcErr;
       if (!rpcData || rpcData.length === 0) throw new Error('创建家庭失败');
-      currentFamily = { id: rpcData[0].family_id, name: familyName, invite_code: rpcData[0].invite_code };
+      currentFamily = { id: rpcData[0].family_id, name: familyName, invite_code: rpcData[0].family_invite_code };
       await loadFamilyData();
       showToast('家庭创建成功 🎉 邀请码：' + currentFamily.invite_code);
       onLoginSuccess();
