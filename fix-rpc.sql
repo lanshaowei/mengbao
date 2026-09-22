@@ -1,4 +1,4 @@
--- ==============================================
+﻿-- ==============================================
 -- 修复方案：用 SECURITY DEFINER 函数绕过 RLS
 -- 直接一站式创建家庭 / 加入家庭
 -- ==============================================
@@ -60,3 +60,14 @@ begin
   return query select v_family_id;
 end;
 $$;
+
+-- 获取当前用户家庭 ID（SECURITY DEFINER 绕过 RLS）
+create or replace function public.get_my_family_id()
+returns uuid
+language sql
+security definer
+set search_path = public
+stable
+as 
+  select family_id from public.profiles where id = auth.uid() limit 1;
+;

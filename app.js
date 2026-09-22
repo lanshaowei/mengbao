@@ -145,20 +145,31 @@
   async function loadFamilyData() {
     setSyncState('syncing', '⟳ 加载数据');
     try {
-      // 加载 profile
-      const { data: profileData } = await sb.from('profiles').select('*').eq('id', currentUser.id).single();
-      currentProfile = profileData;
+      // 1. 获取 family_id（用 SECURITY DEFINER RPC 绕过 RLS）
+      let familyId = currentFamily?.id;
+      if (!familyId) {
+        const { data: rpcFam, error: rpcErr } = await sb.rpc('get_my_family_id');
+        if (rpcErr) throw rpcErr;
+        // RPC 返回 [{ get_my_family_id: <uuid> }]
+        familyId = rpcFam?.[0]?.get_my_family_id || rpcFam?.get_my_family_id;
+        if (!familyId) throw new Error('未关联家庭');
+      }
 
-      // 加载 family
-      const { data: familyData } = await sb.from('families').select('*').eq('id', currentProfile.family_id).single();
-      currentFamily = familyData;
+      // 2. 加载 profile（用 maybeSingle 防止 0 行报错）
+      const { data: profileData } = await sb.from('profiles').select('*').eq('id', currentUser.id).maybeSingle();
+      currentProfile = profileData || { id: currentUser.id, family_id: familyId };
 
-      // 加载 babies
+      // 3. 加载 family
+      const { data: familyData, error: famErr } = await sb.from('families').select('*').eq('id', familyId).maybeSingle();
+      if (famErr) throw famErr;
+      currentFamily = familyData || currentFamily || { id: familyId };
+
+      // 4. 加载 babies
       const { data: babyList } = await sb.from('babies').select('*').order('created_at', { ascending: true });
       babies = babyList || [];
 
-      // 加载所有 records
-      const { data: recList } = await sb.from('records').select('*').eq('family_id', currentFamily.id).order('created_at', { ascending: false });
+      // 5. 加载所有 records
+      const { data: recList } = await sb.from('records').select('*').eq('family_id', familyId).order('created_at', { ascending: false });
       records = {};
       babies.forEach(b => {
         records[b.id] = { feeding: [], diaper: [], sleep: [], growth: [], vaccine: {}, milestone: [] };
