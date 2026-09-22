@@ -1,4 +1,4 @@
-/* ========== 基础重置 ========== */
+﻿/* ========== 基础重置 ========== */
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; }
 [hidden] { display: none !important; }
@@ -169,6 +169,42 @@ body {
 .action-icon { font-size: 26px; }
 .action-label { font-size: 12px; color: #666; font-weight: 500; }
 
+.empty-hint {
+  text-align: center;
+  padding: 28px 20px;
+  color: #BBB;
+  font-size: 13px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 14px;
+  border: 1px dashed rgba(255, 183, 197, 0.4);
+}
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 28px 20px;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 183, 197, 0.2);
+}
+.empty-state .empty-art {
+  width: 140px;
+  height: 110px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.empty-state .empty-art svg {
+  width: 100%;
+  height: 100%;
+}
+.empty-state .empty-text {
+  color: #999;
+  font-size: 13px;
+  line-height: 1.6;
+  text-align: center;
+}
 .empty-hint {
   text-align: center;
   padding: 28px 20px;

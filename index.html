@@ -6,14 +6,14 @@
   <meta name="theme-color" content="#FFB7C5" />
   <title>萌宝成长记 · 婴儿养育一体化</title>
   <link rel="stylesheet" href="styles.css" />
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>👶</text></svg>" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👶</text></svg>" />
 </head>
 <body>
   <!-- 顶部状态栏 -->
   <header class="app-header" id="appHeader" hidden>
     <div class="header-left">
       <button class="icon-btn" id="babySwitcherBtn" aria-label="切换宝宝">
-        <span class="baby-avatar" id="currentBabyAvatar">👶</span>
+        <span class="baby-avatar" id="currentBabyAvatar"></span>
       </button>
       <div class="header-title">
         <h1 id="appTitle">萌宝成长记</h1>
@@ -43,7 +43,7 @@
   <!-- 登录界面 -->
   <section id="authScreen" class="auth-screen">
     <div class="auth-brand">
-      <div class="auth-logo">👶</div>
+      <div class="auth-logo" id="authLogo"></div>
       <h1>萌宝成长记</h1>
       <p class="auth-tagline">全家一起记录宝宝成长</p>
     </div>
@@ -299,6 +299,7 @@
   <!-- Supabase SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
+  <script src="assets.js"></script>
   <script src="vaccines.js"></script>
   <script src="app.js"></script>
 </body>
