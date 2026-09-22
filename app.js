@@ -333,7 +333,10 @@
         options: { data: { username, display_name: displayName } }
       });
       if (signErr) throw signErr;
-      currentUser = signData.user;
+      // 强制登录一次（即使邮箱确认未关闭也能拿到 session）
+      const { data: siData, error: siErr } = await sb.auth.signInWithPassword({ email, password });
+      if (siErr) throw siErr;
+      currentUser = siData.user;
       // 2. 创建 family
       const { data: famData, error: famErr } = await sb.from('families').insert({
         name: familyName,
@@ -380,7 +383,10 @@
         if (signErr.message.includes('already registered')) return showAuthError('用户名已被占用，请换一个');
         throw signErr;
       }
-      currentUser = signData.user;
+      // 强制登录一次（即使邮箱确认未关闭也能拿到 session）
+      const { data: siData, error: siErr } = await sb.auth.signInWithPassword({ email, password });
+      if (siErr) throw siErr;
+      currentUser = siData.user;
       currentFamily = famData;
       // 3. 加入家庭
       const { error: profErr } = await sb.from('profiles').update({
