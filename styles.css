@@ -1,6 +1,7 @@
 /* ========== 基础重置 ========== */
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; }
+[hidden] { display: none !important; }
 body {
   font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-size: 15px;
@@ -687,6 +688,191 @@ body {
 .settings-item-label { font-size: 15px; color: #4A4A4A; }
 .settings-item-value { font-size: 14px; color: #999; }
 .settings-item-arrow { color: #CCC; margin-left: 8px; }
+
+/* ========== 登录界面 ========== */
+.auth-screen {
+  min-height: 100vh;
+  background: linear-gradient(160deg, #FFE5EC 0%, #F3E8FF 60%, #FFF9F4 100%);
+  padding: 40px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.auth-brand {
+  text-align: center;
+  margin-bottom: 32px;
+}
+.auth-logo {
+  font-size: 64px;
+  margin-bottom: 8px;
+  filter: drop-shadow(0 4px 12px rgba(255, 183, 197, 0.4));
+}
+.auth-brand h1 {
+  font-size: 24px;
+  color: #E89AAA;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.auth-tagline {
+  color: #999;
+  font-size: 13px;
+  margin-top: 4px;
+}
+.auth-card {
+  background: white;
+  border-radius: 20px;
+  padding: 24px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 4px 24px rgba(255, 183, 197, 0.15);
+}
+.auth-tabs {
+  display: flex;
+  gap: 4px;
+  background: #F5F5F5;
+  padding: 4px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+.auth-tab {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 10px;
+  border-radius: 9px;
+  font-size: 13px;
+  color: #888;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+.auth-tab.active {
+  background: white;
+  color: #E89AAA;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+.auth-panel { display: none; }
+.auth-panel.active { display: block; }
+.auth-submit {
+  width: 100%;
+  margin-top: 8px;
+  padding: 12px;
+  font-size: 15px;
+}
+.auth-hint {
+  margin-top: 14px;
+  text-align: center;
+  font-size: 12px;
+  color: #999;
+  line-height: 1.5;
+}
+.auth-error {
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: #FFE5E5;
+  color: #FF6B6B;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* ========== 同步指示器 ========== */
+.sync-indicator {
+  position: fixed;
+  top: 70px;
+  right: 12px;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  color: #888;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+  backdrop-filter: blur(10px);
+}
+.sync-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #66BB6A;
+}
+.sync-indicator.syncing .sync-dot { background: #FFA726; }
+.sync-indicator.offline .sync-dot { background: #FF6B6B; }
+
+/* ========== 家庭面板 ========== */
+.family-info-card {
+  background: linear-gradient(135deg, #FFE5EC, #F3E8FF);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 18px;
+  text-align: center;
+}
+.family-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: #4A4A4A;
+  margin-bottom: 10px;
+}
+.family-invite {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.invite-label { font-size: 13px; color: #888; }
+.invite-code {
+  font-family: 'SF Mono', Consolas, monospace;
+  font-size: 22px;
+  font-weight: 700;
+  color: #E89AAA;
+  letter-spacing: 2px;
+}
+.family-hint {
+  font-size: 12px;
+  color: #888;
+  line-height: 1.5;
+}
+.family-section { margin-bottom: 18px; }
+.family-section-title {
+  font-size: 13px;
+  color: #999;
+  font-weight: 600;
+  margin-bottom: 8px;
+  padding-left: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.family-members {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 6px rgba(255, 183, 197, 0.08);
+}
+.member-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid #F5F5F5;
+}
+.member-item:last-child { border-bottom: none; }
+.member-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #FFF0F3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.member-name { font-weight: 500; color: #4A4A4A; }
+.member-meta { font-size: 12px; color: #999; margin-top: 2px; }
 
 /* 加载占位 */
 .skeleton {

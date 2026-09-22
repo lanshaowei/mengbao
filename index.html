@@ -10,7 +10,7 @@
 </head>
 <body>
   <!-- 顶部状态栏 -->
-  <header class="app-header">
+  <header class="app-header" id="appHeader" hidden>
     <div class="header-left">
       <button class="icon-btn" id="babySwitcherBtn" aria-label="切换宝宝">
         <span class="baby-avatar" id="currentBabyAvatar">👶</span>
@@ -21,6 +21,9 @@
       </div>
     </div>
     <div class="header-right">
+      <button class="icon-btn" id="familyBtn" aria-label="家庭">
+        <span id="familyBadge">👨‍👩‍👧</span>
+      </button>
       <button class="icon-btn" id="notificationsBtn" aria-label="提醒">
         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
         <span class="badge" id="reminderBadge" hidden>0</span>
@@ -31,8 +34,89 @@
     </div>
   </header>
 
+  <!-- 同步状态指示器 -->
+  <div id="syncIndicator" class="sync-indicator" hidden>
+    <span class="sync-dot"></span>
+    <span id="syncText">已同步</span>
+  </div>
+
+  <!-- 登录界面 -->
+  <section id="authScreen" class="auth-screen">
+    <div class="auth-brand">
+      <div class="auth-logo">👶</div>
+      <h1>萌宝成长记</h1>
+      <p class="auth-tagline">全家一起记录宝宝成长</p>
+    </div>
+    <div class="auth-card">
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-auth-tab="login">登录</button>
+        <button class="auth-tab" data-auth-tab="join">加入家庭</button>
+        <button class="auth-tab" data-auth-tab="create">创建家庭</button>
+      </div>
+
+      <!-- 登录 -->
+      <div class="auth-panel active" data-auth-panel="login">
+        <div class="form-group">
+          <label class="form-label">用户名</label>
+          <input class="form-input" id="loginUsername" placeholder="如：baba" autocomplete="username" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">密码</label>
+          <input class="form-input" type="password" id="loginPassword" placeholder="至少 6 位" autocomplete="current-password" />
+        </div>
+        <button class="btn-primary auth-submit" id="loginBtn">登录</button>
+        <div class="auth-hint">首次使用？请「加入家庭」或「创建家庭」</div>
+      </div>
+
+      <!-- 加入家庭 -->
+      <div class="auth-panel" data-auth-panel="join">
+        <div class="form-group">
+          <label class="form-label">家庭邀请码 *</label>
+          <input class="form-input" id="joinCode" placeholder="6 位邀请码（向家人索取）" maxlength="6" style="text-transform:uppercase;" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">我的用户名 *</label>
+          <input class="form-input" id="joinUsername" placeholder="如：mama / yeye / nainai" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">显示名（家人看的名字）</label>
+          <input class="form-input" id="joinDisplayName" placeholder="如：妈妈" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">设置密码 *</label>
+          <input class="form-input" type="password" id="joinPassword" placeholder="至少 6 位" />
+        </div>
+        <button class="btn-primary auth-submit" id="joinBtn">加入</button>
+      </div>
+
+      <!-- 创建家庭 -->
+      <div class="auth-panel" data-auth-panel="create">
+        <div class="form-group">
+          <label class="form-label">家庭名称 *</label>
+          <input class="form-input" id="createFamilyName" placeholder="如：温馨之家" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">我的用户名 *</label>
+          <input class="form-input" id="createUsername" placeholder="家庭管理员用户名" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">显示名 *</label>
+          <input class="form-input" id="createDisplayName" placeholder="如：爸爸" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">设置密码 *</label>
+          <input class="form-input" type="password" id="createPassword" placeholder="至少 6 位" />
+        </div>
+        <button class="btn-primary auth-submit" id="createBtn">创建并成为管理员</button>
+        <div class="auth-hint">创建后系统会生成 6 位邀请码，把邀请码告诉家人让他们加入</div>
+      </div>
+
+      <div class="auth-error" id="authError" hidden></div>
+    </div>
+  </section>
+
   <!-- 主内容区 -->
-  <main id="app">
+  <main id="app" hidden>
     <!-- 仪表板视图 -->
     <section class="view active" id="view-dashboard">
       <div class="dashboard-header">
@@ -179,7 +263,7 @@
   </main>
 
   <!-- 底部导航 -->
-  <nav class="bottom-nav">
+  <nav class="bottom-nav" id="bottomNav" hidden>
     <button class="nav-btn active" data-view="dashboard">
       <span class="nav-icon">🏠</span>
       <span class="nav-label">首页</span>
@@ -212,6 +296,9 @@
   <!-- Toast 提示 -->
   <div id="toast" class="toast" hidden></div>
 
+  <!-- Supabase SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
   <script src="vaccines.js"></script>
   <script src="app.js"></script>
 </body>
