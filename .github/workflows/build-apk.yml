@@ -1,15 +1,16 @@
-# Build Android APK from PWA via Bubblewrap (Google TWA)
-# Usage: GitHub → Actions → "Build Android APK" → Run workflow → download "mengbao-android" artifact
+# Build Android APK from PWA (直接用 gradle，不用 Bubblewrap CLI)
+# Usage: GitHub → Actions → "Build Android APK" → Run workflow → 下载 "mengbao-android" artifact
 name: Build Android APK
 
 on:
-  workflow_dispatch:        # 手动触发
+  workflow_dispatch:
   push:
     branches: [main]
     paths:
       - 'manifest.json'
       - 'icon-512.png'
       - 'icon-192.png'
+      - 'android-twa/**'
       - '.github/workflows/build-apk.yml'
 
 jobs:
@@ -41,99 +42,30 @@ jobs:
           packages: 'platform-tools platforms;android-34 build-tools;34.0.0'
           log-accepted-android-sdk-licenses: false
 
-      - name: Configure Bubblewrap (point to system JDK + Android SDK)
-        run: |
-          mkdir -p "$HOME/.bubblewrap"
-          JDK_PATH="${JAVA_HOME:-$(dirname "$(dirname "$(readlink -f "$(which java)")")")}"
-          # setup-android 把 SDK 装到 $HOME/android-sdk；如果 ANDROID_HOME 未设则用默认值
-          SDK_PATH="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/android-sdk}}"
-          echo "{\"jdkPath\":\"$JDK_PATH\",\"androidSdkPath\":\"$SDK_PATH\"}" > "$HOME/.bubblewrap/config.json"
-          echo "--- Bubblewrap config ---"
-          cat "$HOME/.bubblewrap/config.json"
-          echo "--- Environment ---"
-          echo "JAVA_HOME=$JAVA_HOME"
-          echo "ANDROID_HOME=$ANDROID_HOME"
-          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+      - name: Make gradlew executable
+        working-directory: android-twa
+        run: chmod +x gradlew
 
-      - name: Install Bubblewrap CLI
-        run: npm install -g @bubblewrap/cli
+      - name: Verify gradle wrapper works
+        working-directory: android-twa
+        run: ./gradlew --version
 
-      - name: Verify environment
-        run: |
-          java -version
-          echo "ANDROID_HOME=$ANDROID_HOME"
-          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
-          ls -la "$ANDROID_HOME" 2>/dev/null || ls -la "$HOME/android-sdk" 2>/dev/null || echo "No SDK directory found"
-          # bubblewrap doctor 太严格，不强制要求
-          bubblewrap doctor || echo "(doctor warnings ignored)"
-
-      - name: Init TWA project (auto-accept defaults)
-        id: init
-        run: |
-          mkdir -p android-twa
-          cd android-twa
-          set +e  # 不要让任何非零退出码终止步骤
-          # 1) 预创建签名密钥（让 bubblewrap 跳过 6 个 keystore 问题）
-          keytool -genkeypair \
-            -alias mengbao \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 10000 \
-            -keystore android.keystore \
-            -storepass mengbao2024 \
-            -keypass mengbao2024 \
-            -dname "CN=Mengbao, OU=Family, O=Mengbao, L=Beihai, S=Guangxi, C=CN"
-          echo '--- keystore created ---'
-          ls -la android.keystore
-          echo '--- manifest test ---'
-          curl -sI "https://lanshaowei.github.io/mengbao/manifest.json" | head -3
-          echo '--- starting bubblewrap init ---'
-          # Bubblewrap init 需要 stdin，但我们用 < /dev/null 强制立即 EOF
-          # 看 inquirer 会怎么处理
-          printf '\n%.0s' {1..50} > /tmp/empty_inputs.txt
-          bubblewrap init \
-            --manifest="https://lanshaowei.github.io/mengbao/manifest.json" \
-            --directory=. < /tmp/empty_inputs.txt 2>&1 | tee /tmp/bubblewrap_init.log
-          EXIT_CODE=${PIPESTATUS[0]}
-          echo "--- bubblewrap init exit: $EXIT_CODE ---"
-          echo '--- twa-manifest.json if exists ---'
-          cat twa-manifest.json 2>/dev/null || echo "(no twa-manifest.json)"
-          echo '--- files in directory ---'
-          ls -la
-          if [ $EXIT_CODE -ne 0 ]; then
-            echo "::error::Bubblewrap init failed with code $EXIT_CODE"
-            exit $EXIT_CODE
-          fi
-
-      - name: Upload init logs (always)
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: bubblewrap-init-logs
-          path: |
-            /tmp/bubblewrap_init.log
-            android-twa/**/*
-          if-no-files-found: ignore
-          retention-days: 7
-
-      - name: Build APK
+      - name: Build APK (release, signed)
         working-directory: android-twa
         env:
           BUBBLEWRAP_KEYSTORE_PASSWORD: mengbao2024
           BUBBLEWRAP_KEY_PASSWORD: mengbao2024
         run: |
-          bubblewrap build --skipPwaValidation
-          echo '--- APK / AAB files ---'
-          find . -name '*.apk' -ls
-          find . -name '*.aab' -ls
+          ./gradlew assembleRelease --no-daemon --stacktrace
+          echo '=== APK files ==='
+          find app/build/outputs -name '*.apk' -ls
 
       - name: Copy artifacts with friendly names
+        working-directory: android-twa
         run: |
-          cd android-twa
           mkdir -p out
-          cp app/build/outputs/apk/release/app-release-signed.apk out/mengbao-1.0.0.apk || echo "No signed APK"
-          cp app/build/outputs/bundle/release/app-release-bundle.aab out/mengbao-1.0.0.aab || echo "No AAB"
-          cp twa-manifest.json out/twa-manifest.json
+          cp app/build/outputs/apk/release/app-release.apk out/mengbao-1.0.0.apk 2>/dev/null \
+            || cp app/build/outputs/apk/release/*.apk out/mengbao-1.0.0.apk
           ls -la out/
 
       - name: Upload APK / AAB artifacts

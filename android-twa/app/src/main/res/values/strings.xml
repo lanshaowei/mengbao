@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <!--
+    萌宝成长记 - TWA Asset Statements
+    这告诉 Android：这个 app 与指定网站存在关联，可以隐藏 URL bar
+    实际生效还需要在 https://lanshaowei.github.io/mengbao/.well-known/assetlinks.json 部署反向链接
+    但因为 Github Pages 不能放 .well-known，我们先在 strings.xml 里声明（用户能看到「网址栏」但功能正常）
+  -->
+  <string name="assetStatements">
+    [{
+        \"relation\": [\"delegate_permission/common.handle_all_urls\"],
+        \"target\": {
+            \"namespace\": \"web\",
+            \"site\": \"https://lanshaowei.github.io/mengbao/\"
+        }
+    }]
+  </string>
+</resources>

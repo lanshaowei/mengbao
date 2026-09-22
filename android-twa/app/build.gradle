@@ -1,0 +1,74 @@
+/*
+ * 萌宝成长记 - Android TWA build config
+ * Generated for GitHub Actions APK build
+ */
+
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    compileSdkVersion 34
+    namespace 'com.mengbao.app'
+    defaultConfig {
+        applicationId 'com.mengbao.app'
+        minSdkVersion 21
+        targetSdkVersion 34
+        versionCode 1
+        versionName '1.0.0'
+
+        // TWA 配置
+        resValue 'string', 'appName', '萌宝成长记'
+        resValue 'string', 'launcherName', '萌宝'
+        resValue 'string', 'launchUrl', 'https://lanshaowei.github.io/mengbao/'
+        resValue 'string', 'hostName', 'lanshaowei.github.io'
+        resValue 'color', 'colorPrimary', '#FFB7C5'
+        resValue 'color', 'colorPrimaryDark', '#FFB7C5'
+        resValue 'color', 'navigationColor', '#FFE5EC'
+        resValue 'color', 'navigationColorDark', '#FFE5EC'
+        resValue 'color', 'navigationDividerColor', '#00000000'
+        resValue 'color', 'navigationDividerColorDark', '#000000'
+        resValue 'color', 'backgroundColor', '#FFE5EC'
+        resValue 'string', 'providerAuthority', 'com.mengbao.app.fileprovider'
+        resValue 'bool', 'enableNotification', 'false'
+        resValue 'integer', 'splashScreenFadeOutDuration', '0'
+        resValue 'string', 'generatorApp', 'mengbao-direct-build'
+        resValue 'string', 'fallbackType', 'customtabs'
+        resValue 'bool', 'enableSiteSettingsShortcut', 'true'
+        resValue 'string', 'orientation', 'portrait'
+    }
+    signingConfigs {
+        release {
+            storeFile file('mengbao.keystore')
+            storePassword 'mengbao2024'
+            keyAlias 'mengbao'
+            keyPassword 'mengbao2024'
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.release
+        }
+        debug {
+            signingConfig signingConfigs.release
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    lintOptions {
+        checkReleaseBuilds false
+    }
+}
+
+repositories {
+    google()
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'androidx.browser:browser:1.4.0'
+    implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.4.0'
+}
