@@ -68,9 +68,11 @@ jobs:
           bubblewrap doctor || echo "(doctor warnings ignored)"
 
       - name: Init TWA project (auto-accept defaults)
+        id: init
         run: |
           mkdir -p android-twa
           cd android-twa
+          set +e  # 不要让任何非零退出码终止步骤
           # 1) 预创建签名密钥（让 bubblewrap 跳过 6 个 keystore 问题）
           keytool -genkeypair \
             -alias mengbao \
@@ -83,24 +85,36 @@ jobs:
             -dname "CN=Mengbao, OU=Family, O=Mengbao, L=Beihai, S=Guangxi, C=CN"
           echo '--- keystore created ---'
           ls -la android.keystore
-          echo '--- starting bubblewrap init (non-interactive) ---'
-          # 2) 用 printf 生成多个空行喂 inquirer 默认值
-          # Bubblewrap init 会问 ~18 个问题（host/startUrl/name/launcherName/packageId/versionCode/display/orientation/themeColor/backgroundColor/iconUrl/maskable/monochrome/playBilling/locationDelegation/keyPath/keyAlias）
-          # 提供 50 行足够覆盖
+          echo '--- manifest test ---'
+          curl -sI "https://lanshaowei.github.io/mengbao/manifest.json" | head -3
+          echo '--- starting bubblewrap init ---'
+          # Bubblewrap init 需要 stdin，但我们用 < /dev/null 强制立即 EOF
+          # 看 inquirer 会怎么处理
           printf '\n%.0s' {1..50} > /tmp/empty_inputs.txt
           bubblewrap init \
             --manifest="https://lanshaowei.github.io/mengbao/manifest.json" \
-            --directory=. < /tmp/empty_inputs.txt
-          EXIT_CODE=$?
+            --directory=. < /tmp/empty_inputs.txt 2>&1 | tee /tmp/bubblewrap_init.log
+          EXIT_CODE=${PIPESTATUS[0]}
           echo "--- bubblewrap init exit: $EXIT_CODE ---"
+          echo '--- twa-manifest.json if exists ---'
+          cat twa-manifest.json 2>/dev/null || echo "(no twa-manifest.json)"
+          echo '--- files in directory ---'
+          ls -la
           if [ $EXIT_CODE -ne 0 ]; then
-            echo '--- debug: list files ---'
-            ls -la
-            cat /tmp/empty_inputs.txt | head -5
+            echo "::error::Bubblewrap init failed with code $EXIT_CODE"
             exit $EXIT_CODE
           fi
-          echo '--- twa-manifest.json ---'
-          cat twa-manifest.json
+
+      - name: Upload init logs (always)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bubblewrap-init-logs
+          path: |
+            /tmp/bubblewrap_init.log
+            android-twa/**/*
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Build APK
         working-directory: android-twa
