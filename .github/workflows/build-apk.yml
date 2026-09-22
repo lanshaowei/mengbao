@@ -81,11 +81,24 @@ jobs:
             -storepass mengbao2024 \
             -keypass mengbao2024 \
             -dname "CN=Mengbao, OU=Family, O=Mengbao, L=Beihai, S=Guangxi, C=CN"
+          echo '--- keystore created ---'
           ls -la android.keystore
-          # 2) 用 30 个回车喂默认值（17 个问题，每个最多 1 个回车，保险起见给 30 个）
-          yes "" | head -n 30 | bubblewrap init \
+          echo '--- starting bubblewrap init (non-interactive) ---'
+          # 2) 用 printf 生成多个空行喂 inquirer 默认值
+          # Bubblewrap init 会问 ~18 个问题（host/startUrl/name/launcherName/packageId/versionCode/display/orientation/themeColor/backgroundColor/iconUrl/maskable/monochrome/playBilling/locationDelegation/keyPath/keyAlias）
+          # 提供 50 行足够覆盖
+          printf '\n%.0s' {1..50} > /tmp/empty_inputs.txt
+          bubblewrap init \
             --manifest="https://lanshaowei.github.io/mengbao/manifest.json" \
-            --directory=.
+            --directory=. < /tmp/empty_inputs.txt
+          EXIT_CODE=$?
+          echo "--- bubblewrap init exit: $EXIT_CODE ---"
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo '--- debug: list files ---'
+            ls -la
+            cat /tmp/empty_inputs.txt | head -5
+            exit $EXIT_CODE
+          fi
           echo '--- twa-manifest.json ---'
           cat twa-manifest.json
 
