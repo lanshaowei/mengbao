@@ -1,0 +1,109 @@
+# Build Android APK from PWA via Bubblewrap (Google TWA)
+# Usage: GitHub → Actions → "Build Android APK" → Run workflow → download "mengbao-android" artifact
+name: Build Android APK
+
+on:
+  workflow_dispatch:        # 手动触发
+  push:
+    branches: [main]
+    paths:
+      - 'manifest.json'
+      - 'icon-512.png'
+      - 'icon-192.png'
+      - '.github/workflows/build-apk.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Java JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          cmdline-tools-version: '11076708'
+          sdk-version: '34'
+          build-tools-version: '34.0.0'
+          platform-version: '34'
+
+      - name: Configure Bubblewrap (point to system JDK + Android SDK)
+        run: |
+          mkdir -p "$HOME/.bubblewrap"
+          JDK_PATH="$(dirname "$(dirname "$(readlink -f "$(which java)")")")"
+          echo "{\"jdkPath\":\"$JDK_PATH\",\"androidSdkPath\":\"$ANDROID_HOME\"}" > "$HOME/.bubblewrap/config.json"
+          cat "$HOME/.bubblewrap/config.json"
+
+      - name: Install Bubblewrap CLI
+        run: npm install -g @bubblewrap/cli
+
+      - name: Verify environment
+        run: |
+          bubblewrap doctor
+          java -version
+          echo "ANDROID_HOME=$ANDROID_HOME"
+
+      - name: Init TWA project (auto-accept defaults)
+        run: |
+          mkdir -p android-twa
+          cd android-twa
+          # 1) 预创建签名密钥（让 bubblewrap 跳过 6 个 keystore 问题）
+          keytool -genkeypair \
+            -alias mengbao \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -keystore android.keystore \
+            -storepass mengbao2024 \
+            -keypass mengbao2024 \
+            -dname "CN=Mengbao, OU=Family, O=Mengbao, L=Beihai, S=Guangxi, C=CN"
+          ls -la android.keystore
+          # 2) 用 30 个回车喂默认值（17 个问题，每个最多 1 个回车，保险起见给 30 个）
+          yes "" | head -n 30 | bubblewrap init \
+            --manifest="https://lanshaowei.github.io/mengbao/manifest.json" \
+            --directory=.
+          echo '--- twa-manifest.json ---'
+          cat twa-manifest.json
+
+      - name: Build APK
+        working-directory: android-twa
+        env:
+          BUBBLEWRAP_KEYSTORE_PASSWORD: mengbao2024
+          BUBBLEWRAP_KEY_PASSWORD: mengbao2024
+        run: |
+          bubblewrap build --skipPwaValidation
+          echo '--- APK / AAB files ---'
+          find . -name '*.apk' -ls
+          find . -name '*.aab' -ls
+
+      - name: Copy artifacts with friendly names
+        run: |
+          cd android-twa
+          mkdir -p out
+          cp app/build/outputs/apk/release/app-release-signed.apk out/mengbao-1.0.0.apk || echo "No signed APK"
+          cp app/build/outputs/bundle/release/app-release-bundle.aab out/mengbao-1.0.0.aab || echo "No AAB"
+          cp twa-manifest.json out/twa-manifest.json
+          ls -la out/
+
+      - name: Upload APK / AAB artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: mengbao-android
+          path: android-twa/out/*
+          if-no-files-found: error
+          retention-days: 30
