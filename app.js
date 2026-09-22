@@ -337,22 +337,17 @@
       const { data: siData, error: siErr } = await sb.auth.signInWithPassword({ email, password });
       if (siErr) throw siErr;
       currentUser = siData.user;
-      // 2. 创建 family
-      const { data: famData, error: famErr } = await sb.from('families').insert({
-        name: familyName,
-        created_by: currentUser.id
-      }).select().single();
-      if (famErr) throw famErr;
-      currentFamily = famData;
-      // 3. 把 admin 标记为管理员
-      const { error: profErr } = await sb.from('profiles').update({
-        family_id: famData.id,
-        role: 'admin',
-        display_name: displayName
-      }).eq('id', currentUser.id);
-      if (profErr) throw profErr;
+      // 2. 通过 RPC 创建家庭（SECURITY DEFINER 绕过 RLS 限制）
+      const { data: rpcData, error: rpcErr } = await sb.rpc('create_family', {
+        p_name: familyName,
+        p_user_id: currentUser.id,
+        p_display_name: displayName
+      });
+      if (rpcErr) throw rpcErr;
+      if (!rpcData || rpcData.length === 0) throw new Error('创建家庭失败');
+      currentFamily = { id: rpcData[0].family_id, name: familyName, invite_code: rpcData[0].invite_code };
       await loadFamilyData();
-      showToast('家庭创建成功 🎉 邀请码：' + famData.invite_code);
+      showToast('家庭创建成功 🎉 邀请码：' + currentFamily.invite_code);
       onLoginSuccess();
     } catch (err) {
       showAuthError('创建失败：' + err.message);
@@ -387,14 +382,18 @@
       const { data: siData, error: siErr } = await sb.auth.signInWithPassword({ email, password });
       if (siErr) throw siErr;
       currentUser = siData.user;
-      currentFamily = famData;
-      // 3. 加入家庭
-      const { error: profErr } = await sb.from('profiles').update({
-        family_id: famData.id,
-        role: 'member',
-        display_name: displayName
-      }).eq('id', currentUser.id);
-      if (profErr) throw profErr;
+      // 3. 通过 RPC 加入家庭
+      const { data: joinData, error: joinErr } = await sb.rpc('join_family', {
+        p_invite_code: code,
+        p_user_id: currentUser.id,
+        p_display_name: displayName
+      });
+      if (joinErr) {
+        if (joinErr.message.includes('邀请码')) return showAuthError('邀请码不正确');
+        throw joinErr;
+      }
+      if (!joinData || joinData.length === 0) throw new Error('加入家庭失败');
+      currentFamily = { id: joinData[0].family_id, name: '家庭', invite_code: code };
       await loadFamilyData();
       showToast('加入成功 🎉 欢迎来到 ' + famData.name);
       onLoginSuccess();
