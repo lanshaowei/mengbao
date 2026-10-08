@@ -299,8 +299,23 @@
   <!-- Toast 提示 -->
   <div id="toast" class="toast" hidden></div>
 
-  <!-- Supabase SDK -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Supabase SDK（本地托管，避免国内访问公共 CDN 失败） -->
+  <script src="supabase.min.js"></script>
+  <script>
+    // SDK 加载失败时给出明确提示，而不是让页面莫名其妙报错
+    if (typeof window.supabase === 'undefined') {
+      document.addEventListener('DOMContentLoaded', function () {
+        var box = document.createElement('div');
+        box.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#fff;' +
+          'display:flex;align-items:center;justify-content:center;padding:24px;' +
+          'font-family:system-ui,sans-serif;color:#333;text-align:center;line-height:1.8';
+        box.innerHTML = '<div><div style="font-size:44px">📡</div>' +
+          '<h2 style="margin:12px 0">加载失败</h2>' +
+          '<p style="color:#666">网络不太顺畅，请检查网络后<br>下拉刷新页面重试。</p></div>';
+        document.body.appendChild(box);
+      });
+    }
+  </script>
   <script src="config.js"></script>
   <script src="assets.js"></script>
   <script src="vaccines.js"></script>

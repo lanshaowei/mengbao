@@ -1,4 +1,4 @@
-﻿// ========================================================================
+// ========================================================================
 // 萌宝成长记 - 婴儿养育一体化记录应用（云端版）
 // 使用 Supabase 作为云端后端：多用户共享 + 邀请码机制
 // ========================================================================
@@ -9,7 +9,63 @@
   // ========== Supabase 初始化 ==========
   const SUPABASE_URL = window.SUPABASE_CONFIG?.url;
   const SUPABASE_ANON_KEY = window.SUPABASE_CONFIG?.anonKey;
+
+  // SDK 缺失时不要直接抛错崩掉整页，给出可读提示
+  if (!window.supabase) {
+    document.addEventListener('DOMContentLoaded', function () {
+      showFatal('组件未加载', '页面组件加载失败，请检查网络后刷新重试。');
+    });
+    return;
+  }
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  // ========== 网络容错 ==========
+  // 网络抖动（尤其移动网络/墙外服务）时自动重试，避免一次失败就报"离线"
+  function isNetworkError(err) {
+    if (!err) return false;
+    const msg = (err.message || String(err)).toLowerCase();
+    return err.status === 0 || err.status === 429 ||
+      msg.includes('fetch') || msg.includes('network') ||
+      msg.includes('timeout') || msg.includes('failed to fetch') ||
+      msg.includes('load failed') || msg.includes('aborted');
+  }
+
+  // 带指数退避的重试
+  async function withRetry(fn, opts) {
+    const retries = (opts && opts.retries) || 2;
+    let lastErr;
+    for (let i = 0; i <= retries; i++) {
+      try {
+        return await fn();
+      } catch (err) {
+        lastErr = err;
+        // 只对网络类错误重试；业务错误（如权限不足）立即抛出
+        if (!isNetworkError(err) || i === retries) throw err;
+        await new Promise(r => setTimeout(r, 600 * Math.pow(2, i)));
+      }
+    }
+    throw lastErr;
+  }
+
+  // 友好的错误文案：区分"网络问题"和"业务问题"
+  function friendlyError(err, fallback) {
+    if (isNetworkError(err)) {
+      return '网络不太顺畅，请稍后重试（或换个网络环境）';
+    }
+    if (err && err.message) return fallback + '：' + err.message;
+    return fallback;
+  }
+
+  function showFatal(title, msg) {
+    const box = document.createElement('div');
+    box.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#fff;' +
+      'display:flex;align-items:center;justify-content:center;padding:24px;' +
+      'font-family:system-ui,sans-serif;color:#333;text-align:center;line-height:1.8';
+    box.innerHTML = '<div><div style="font-size:44px">📡</div>' +
+      '<h2 style="margin:12px 0">' + title + '</h2>' +
+      '<p style="color:#666">' + msg + '</p></div>';
+    document.body.appendChild(box);
+  }
 
   // ========== 本地状态 ==========
   let currentUser = null;     // { id, email }
@@ -148,7 +204,7 @@
       // 1. 获取 family_id（用 SECURITY DEFINER RPC 绕过 RLS）
       let familyId = currentFamily?.id;
       if (!familyId) {
-        const { data: rpcFam, error: rpcErr } = await sb.rpc('get_my_family_id');
+        const { data: rpcFam, error: rpcErr } = await withRetry(() => sb.rpc('get_my_family_id'));
         if (rpcErr) throw rpcErr;
         // RPC 返回 [{ get_my_family_id: <uuid> }]
         familyId = rpcFam?.[0]?.get_my_family_id || rpcFam?.get_my_family_id;
@@ -156,20 +212,24 @@
       }
 
       // 2. 加载 profile（用 maybeSingle 防止 0 行报错）
-      const { data: profileData } = await sb.from('profiles').select('*').eq('id', currentUser.id).maybeSingle();
+      const { data: profileData } = await withRetry(() =>
+        sb.from('profiles').select('*').eq('id', currentUser.id).maybeSingle());
       currentProfile = profileData || { id: currentUser.id, family_id: familyId };
 
       // 3. 加载 family
-      const { data: familyData, error: famErr } = await sb.from('families').select('*').eq('id', familyId).maybeSingle();
+      const { data: familyData, error: famErr } = await withRetry(() =>
+        sb.from('families').select('*').eq('id', familyId).maybeSingle());
       if (famErr) throw famErr;
       currentFamily = familyData || currentFamily || { id: familyId };
 
       // 4. 加载 babies
-      const { data: babyList } = await sb.from('babies').select('*').order('created_at', { ascending: true });
+      const { data: babyList } = await withRetry(() =>
+        sb.from('babies').select('*').order('created_at', { ascending: true }));
       babies = babyList || [];
 
       // 5. 加载所有 records
-      const { data: recList } = await sb.from('records').select('*').eq('family_id', familyId).order('created_at', { ascending: false });
+      const { data: recList } = await withRetry(() =>
+        sb.from('records').select('*').eq('family_id', familyId).order('created_at', { ascending: false }));
       records = {};
       babies.forEach(b => {
         records[b.id] = { feeding: [], diaper: [], sleep: [], growth: [], vaccine: {}, milestone: [] };
@@ -188,7 +248,16 @@
     } catch (err) {
       console.error('加载数据失败', err);
       setSyncState('offline');
-      showToast('加载数据失败：' + err.message);
+      showToast(friendlyError(err, '加载数据失败'));
+      // 网络恢复后自动重试一次，避免用户必须手动刷新
+      if (isNetworkError(err)) {
+        setTimeout(() => {
+          if (currentUser) {
+            setSyncState('syncing', '⟳ 重新连接');
+            loadFamilyData();
+          }
+        }, 3000);
+      }
     }
   }
 
@@ -211,7 +280,7 @@
       return row;
     } catch (err) {
       setSyncState('offline');
-      showToast('添加失败：' + err.message);
+      showToast(friendlyError(err, '添加失败'));
       throw err;
     }
   }
@@ -232,7 +301,7 @@
       setSyncState('synced');
     } catch (err) {
       setSyncState('offline');
-      showToast('更新失败：' + err.message);
+      showToast(friendlyError(err, '更新失败'));
     }
   }
 
@@ -246,7 +315,7 @@
       setSyncState('synced');
     } catch (err) {
       setSyncState('offline');
-      showToast('删除失败：' + err.message);
+      showToast(friendlyError(err, '删除失败'));
     }
   }
 
@@ -279,7 +348,7 @@
       setSyncState('synced');
     } catch (err) {
       setSyncState('offline');
-      showToast('保存失败：' + err.message);
+      showToast(friendlyError(err, '保存失败'));
     }
   }
 
@@ -298,7 +367,7 @@
       setSyncState('synced');
     } catch (err) {
       setSyncState('offline');
-      showToast('删除失败：' + err.message);
+      showToast(friendlyError(err, '删除失败'));
     }
   }
 
@@ -316,7 +385,8 @@
     const password = $('#loginPassword').value;
     if (!username || !password) return showAuthError('请输入用户名和密码');
     const email = username + '@mengbao.app';
-    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+    const { data, error } = await withRetry(() =>
+      sb.auth.signInWithPassword({ email, password }));
     if (error) {
       // 用户不存在则提示去注册
       return showAuthError('登录失败：' + (error.message.includes('Invalid') ? '用户名或密码错误' : error.message));
